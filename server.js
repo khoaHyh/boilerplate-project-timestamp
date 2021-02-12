@@ -18,15 +18,52 @@ app.get("/", function (req, res) {
   res.sendFile(__dirname + '/views/index.html');
 });
 
+// https://stackoverflow.com/questions/175739/built-in-way-in-javascript-to-check-if-a-string-is-a-valid-number
+const isNumeric = (str) => {
+  if (typeof str != "string") return false // we only process strings!  
+  return !isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
+    !isNaN(parseFloat(str)) // ...and ensure strings of whitespace fail
+}
 
-// your first API endpoint... 
-app.get("/api/hello", function (req, res) {
-  res.json({greeting: 'hello API'});
+// format date
+// function formatDate(date) {
+//   var d = new Date(date),
+//   month = '' + (d.getMonth() + 1),
+//   day = '' + d.getDay(),
+//   date = '' + d.getDate(),
+//   year = d.getFullYear();
+
+//   if (month.length < 2) 
+//     month = '0' + month;
+//   if (day.length < 2) 
+//     date = '0' + date;
+
+//   return `${day}, ${date} ${month} ${year}`;
+// }
+
+// returns a json object with unix key = timestamp of input date in milliseconds
+// and utc key = input date in format "Thu, 01 Jan 1970 00:00:00 GMT"
+app.get("/api/timestamp/:date?", (req, res, next) => {
+  // let estToGMT0 = 300 * 60 * 1000;
+  req.utc = new Date();
+  if (isNumeric(req.params.date)) {
+    req.utc = new Date(parseInt(req.params.date));
+  } else if ((new Date(req.params.date)) instanceof Date) {
+    req.utc = new Date(Date.parse(new Date(req.params.date)));
+  }
+  req.unix = Date.parse(req.utc);
+  // console.log(req.utc.getTimezoneOffset());
+  next();
+}, (req, res) => {
+  if(req.utc.toString() === "Invalid Date") {
+    res.status(200).json({ "error": "Invalid Date" })
+  }
+  res.status(200).json({ "unix": req.unix, "utc": req.utc.toUTCString() });
 });
 
 
 
 // listen for requests :)
-var listener = app.listen(process.env.PORT, function () {
+var listener = app.listen(process.env.PORT, () => {
   console.log('Your app is listening on port ' + listener.address().port);
 });
