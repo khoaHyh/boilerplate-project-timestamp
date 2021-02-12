@@ -25,37 +25,20 @@ const isNumeric = (str) => {
     !isNaN(parseFloat(str)) // ...and ensure strings of whitespace fail
 }
 
-// format date
-// function formatDate(date) {
-//   var d = new Date(date),
-//   month = '' + (d.getMonth() + 1),
-//   day = '' + d.getDay(),
-//   date = '' + d.getDate(),
-//   year = d.getFullYear();
-
-//   if (month.length < 2) 
-//     month = '0' + month;
-//   if (day.length < 2) 
-//     date = '0' + date;
-
-//   return `${day}, ${date} ${month} ${year}`;
-// }
-
 // returns a json object with unix key = timestamp of input date in milliseconds
 // and utc key = input date in format "Thu, 01 Jan 1970 00:00:00 GMT"
 app.get("/api/timestamp/:date?", (req, res, next) => {
-  // let estToGMT0 = 300 * 60 * 1000;
   req.utc = new Date();
+  let currentTime = new Date(req.params.date);
   if (isNumeric(req.params.date)) {
     req.utc = new Date(parseInt(req.params.date));
-  } else if ((new Date(req.params.date)) instanceof Date) {
-    req.utc = new Date(Date.parse(new Date(req.params.date)));
+  } else if ((req.params.date != undefined && currentTime) instanceof Date) {
+    req.utc = new Date(Date.parse(currentTime));
   }
   req.unix = Date.parse(req.utc);
-  // console.log(req.utc.getTimezoneOffset());
   next();
 }, (req, res) => {
-  if(req.utc.toString() === "Invalid Date") {
+  if (req.utc.toString() === "Invalid Date" && req.params.date != undefined) {
     res.status(200).json({ "error": "Invalid Date" })
   }
   res.status(200).json({ "unix": req.unix, "utc": req.utc.toUTCString() });
